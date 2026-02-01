@@ -20,7 +20,7 @@ struct stUser {
     int Permissions;
 };
 
-enum enMainMenueOptions {
+enum enMainMenuOptions {
     eShowClientsList = 1,
     eAddClients = 2,
     eDeleteClient = 3,
@@ -31,7 +31,7 @@ enum enMainMenueOptions {
     eLoggout = 8,
     eExit = 9
 };
-enum enTransactionsMenueOptions { eDeposit = 1,
+enum enTransactionsMenuOptions { eDeposit = 1,
     eWithdraw = 2,
     eTotalBalances = 3,
     eExitTranactions = 4
@@ -229,13 +229,20 @@ void PrintAllClientsData(vector<stClient>& vClients)
     cout << "\n________________________________________________________________________________________________\n\n";
 }
 
-void ShowClientsScreen(string ClientsFileName)
+void ShowClientsScreen(string ClientsFileName, stUser User)
 {
-    system("cls");
-    vector<stClient> vClients = LoadClientDataFromFileToVector(ClientsFileName);
-    PrintAllClientsData(vClients);
-    cout << "\n\nPress any key to go back to main meune....";
-    system("pause>0");
+    if (CheckAccessPermission(enPermissions::pListClients, User.Permissions))
+    {
+        system("cls");
+        vector<stClient> vClients = LoadClientDataFromFileToVector(ClientsFileName);
+        PrintAllClientsData(vClients);
+        cout << "\n\nPress any key to go back to main meune....";
+        system("pause>0");
+    }
+    else
+    {
+        ShowAccessDeniedScreen();
+    }
 }
 
 void PrintClientCard(stClient& Client)
@@ -300,32 +307,32 @@ vector<string> LoadFileTextToVector(string ClientsFileName)
     return vText;
 }
 
-void DeleteLineFromFile(string ClientsFileName, string Line)
+void DeleteLineFromFile(string FileName, string Line)
 {
-    vector<string> vFileContent = LoadFileTextToVector(ClientsFileName);
+    vector<string> vFileContent = LoadFileTextToVector(FileName);
     for (string& line : vFileContent)
     {
         if (line == Line)
             line = "";
     }
-    WriteVectorContentInFile(ClientsFileName, vFileContent);
+    WriteVectorContentInFile(FileName, vFileContent);
 }
 
-void UpdateLineFromFile(string ClientsFileName, string OldLine, string NewLine)
+void UpdateLineFromFile(string FileName, string OldLine, string NewLine)
 {
-    vector<string> vFileContent = LoadFileTextToVector(ClientsFileName);
+    vector<string> vFileContent = LoadFileTextToVector(FileName);
     for (string& line : vFileContent)
     {
         if (line == OldLine)
             line = NewLine;
     }
-    WriteVectorContentInFile(ClientsFileName, vFileContent);
+    WriteVectorContentInFile(FileName, vFileContent);
 }
 
-void ShowMainMenueScreen()
+void ShowMainMenuScreen()
 {
     cout << "==========================================\n";
-    cout << "              Main menue                \n";
+    cout << "              Main Menu                \n";
     cout << "==========================================\n";
     cout << "\t[1] Show Clients List.\n";
     cout << "\t[2] Add Clients.\n";
@@ -416,7 +423,7 @@ void DeleteClientScreen(string ClientsFileName, stUser User)
         if (!FindClientByAccountNumber(Client.AccountNumber, ClientsFileName, Client))
         {
             cout << "\nClient with account number [" << Client.AccountNumber << "] is not found!\n\n";
-            cout << "Press any key to go back to main menue....";
+            cout << "Press any key to go back to main Menu....";
             system("pause>0");
         }
         else
@@ -429,13 +436,13 @@ void DeleteClientScreen(string ClientsFileName, stUser User)
                 string Line = ConvertClientRecordToLine(Client);
                 DeleteLineFromFile(ClientsFileName, Line);
                 cout << "\nClient deleted successfully!\n\n";
-                cout << "Press any key to go back to main menue....";
+                cout << "Press any key to go back to main Menu....";
                 system("pause>0");
             }
             else
             {
                 cout << "\nDeletion canceled!\n\n";
-                cout << "Press any key to go back to main menue....";
+                cout << "Press any key to go back to main Menu....";
                 system("pause>0");
             }
         }
@@ -462,7 +469,7 @@ void UpdateClientInfoScreen(string ClientsFileName, stUser User)
         if (!FindClientByAccountNumber(Client.AccountNumber, ClientsFileName, Client))
         {
             cout << "\nClient with account number [" << Client.AccountNumber << "] is not found!\n\n";
-            cout << "Press any key to go back to main menue....";
+            cout << "Press any key to go back to main Menu....";
             system("pause>0");
         }
         else
@@ -481,16 +488,16 @@ void UpdateClientInfoScreen(string ClientsFileName, stUser User)
                 getline(cin, Client.Phone);
                 cout << "Account Balance: ";
                 cin >> Client.AccountBalance;
-                string NewLine = ConvertRecordToLine(Client);
+                string NewLine = ConvertClientRecordToLine(Client);
                 UpdateLineFromFile(ClientsFileName, OldLine, NewLine);
                 cout << "\nClient updated successfully!\n\n";
-                cout << "Press any key to go back to main menue....";
+                cout << "Press any key to go back to main Menu....";
                 system("pause>0");
             }
             else
             {
                 cout << "\nUpdating canceled!\n\n";
-                cout << "Press any key to go back to main menue....";
+                cout << "Press any key to go back to main Menu....";
                 system("pause>0");
             }
         }
@@ -516,13 +523,13 @@ void FindClientScreen(string ClientsFileName, stUser User)
         if (!FindClientByAccountNumber(Client.AccountNumber, ClientsFileName, Client))
         {
             cout << "\nClient with account number [" << Client.AccountNumber << "] is not found!\n\n";
-            cout << "Press any key to go back to main menue....";
+            cout << "Press any key to go back to main Menu....";
             system("pause>0");
         }
         else
         {
             PrintClientCard(Client);
-            cout << "Press any key to go back to main menue....";
+            cout << "Press any key to go back to main Menu....";
             system("pause>0");
         }
     }
@@ -532,7 +539,7 @@ void FindClientScreen(string ClientsFileName, stUser User)
     }
 }
 
-void ShowTransactionsMenueScreen()
+void ShowTransactionsMenuScreen()
 {
     cout << "==========================================\n";
     cout << "         Transactions Screen            \n";
@@ -540,7 +547,7 @@ void ShowTransactionsMenueScreen()
     cout << "\t[1] Deposit.\n";
     cout << "\t[2] Withdraw.\n";
     cout << "\t[3] Total balances.\n";
-    cout << "\t[4] Go back to main menue.\n";
+    cout << "\t[4] Go back to main Menu.\n";
     cout << "==========================================\n";
     cout << "Choose what do you want to do (1-4)? ";
 }
@@ -571,16 +578,16 @@ void ShowDepositScreen(string ClientsFileName)
     if (toupper(confirm) == 'Y')
     {
         Client.AccountBalance += dAmount;
-        string NewClient = ConvertRecordToLine(Client);
+        string NewClient = ConvertClientRecordToLine(Client);
         UpdateLineFromFile(ClientsFileName, OldClient, NewClient);
         cout << "\nTransaction done successfully!\n";
-        cout << "\nPress any key to go back to main menue...";
+        cout << "\nPress any key to go back to main Menu...";
         system("pause>0");
     }
     else
     {
         cout << "\nTransaction canceled!\n";
-        cout << "\nPress any key to go back to main menue...";
+        cout << "\nPress any key to go back to main Menu...";
         system("pause>0");
     }
 }
@@ -599,7 +606,7 @@ void ShowWithDrawScreen(string ClientsFileName)
     if (!FindClientByAccountNumber(Client.AccountNumber, ClientsFileName, Client))
     {
         cout << "\nClient with account number [" << Client.AccountNumber << "] is not found!\n\n";
-        cout << "Press any key to go back to main menue....";
+        cout << "Press any key to go back to main Menu....";
         system("pause>0");
     }
     else
@@ -663,62 +670,44 @@ void TransactionsScreen(string ClientsFileName, stUser User)
 {
     if (CheckAccessPermission(enPermissions::pTransactions, User.Permissions))
     {
-        system("cls");
-        stClient Client;
-        cout << "\n----------------------------------------\n";
-        cout << "\tFind Client Screen\n";
-        cout << "----------------------------------------\n";
-        cout << "\nPlease enter account number: ";
-        cin >> Client.AccountNumber;
-        if (!FindClientByAccountNumber(Client.AccountNumber, ClientsFileName, Client))
+        short choice = 0;
+
+        do
         {
-            cout << "\nClient with account number [" << Client.AccountNumber << "] is not found!\n\n";
-            cout << "Press any key to go back to main menue....";
-            system("pause>0");
-        }
-        else
-        {
-            PrintClientCard(Client);
-            cout << "Press any key to go back to main menue....";
-            system("pause>0");
-        }
+            system("cls");
+            ShowTransactionsMenuScreen();
+            cin >> choice;
+
+            switch (enTransactionsMenuOptions(choice))
+            {
+            case enTransactionsMenuOptions::eDeposit:
+                ShowDepositScreen(ClientsFileName);
+                break;
+
+            case enTransactionsMenuOptions::eWithdraw:
+                ShowWithDrawScreen(ClientsFileName);
+                break;
+
+            case enTransactionsMenuOptions::eTotalBalances:
+                ShowTotalBalancesScreen(ClientsFileName);
+                break;
+
+            case enTransactionsMenuOptions::eExitTranactions:
+                break;
+
+            default:
+                cout << "\nInvalid option! Please choose 1-4.\n";
+                system("pause>0");
+                break;
+            }
+
+        } while (enTransactionsMenuOptions(choice) != enTransactionsMenuOptions::eExitTranactions);
     }
     else
     {
         ShowAccessDeniedScreen();
     }
-    short choice = 0;
 
-    do
-    {
-        system("cls");
-        ShowTransactionsMenueScreen();
-        cin >> choice;
-
-        switch (enTransactionsMenueOptions(choice))
-        {
-        case enTransactionsMenueOptions::eDeposit:
-            ShowDepositScreen(ClientsFileName);
-            break;
-
-        case enTransactionsMenueOptions::eWithdraw:
-            ShowWithDrawScreen(ClientsFileName);
-            break;
-
-        case enTransactionsMenueOptions::eTotalBalances:
-            ShowTotalBalancesScreen(ClientsFileName);
-            break;
-
-        case enTransactionsMenueOptions::eExitTranactions:
-            break;
-
-        default:
-            cout << "\nInvalid option! Please choose 1-4.\n";
-            system("pause>0");
-            break;
-        }
-
-    } while (enTransactionsMenueOptions(choice) != enTransactionsMenueOptions::eExitTranactions);
 }
 
 stUser ConvertLineToUserRecord(string LineData, string seperator = "#//#")
@@ -749,26 +738,32 @@ vector<stUser> LoadUserDataFromFileToVector(string UsersFileName)
     return vUsers;
 }
 
-bool FindUserByUsernameAndPassword(string UsersFileName, stUser User)
+bool FindUserByUsernameAndPassword(string UsersFileName, stUser &User)
 {
     vector<stUser> vUsers = LoadUserDataFromFileToVector(UsersFileName);
 
-    for (int i = 0; i < vUsers.size(); i++)
+    for (stUser u : vUsers)
     {
-        if (User.Username == vUsers[i].Username && User.Password == vUsers[i].Password)
+        if (User.Username == u.Username && User.Password == u.Password)
+        {
+            User = u;
             return true;
+        }
     }
     return false;
 }
 
-bool FindUserByUsername(string UsersFileName, string Username)
+bool FindUserByUsername(string UsersFileName, string Username, stUser &User)
 {
     vector<stUser> vUsers = LoadUserDataFromFileToVector(UsersFileName);
 
-    for (int i = 0; i < vUsers.size(); i++)
+    for (stUser u : vUsers)
     {
-        if (Username == vUsers[i].Username)
+        if (Username == u.Username)
+        {
+            User = u;
             return true;
+        }
     }
     return false;
 }
@@ -779,8 +774,6 @@ stUser LogginScreen(string UsersFileName)
     cout << "\n-------------------------------\n";
     cout << "\tLogin Screen\n";
     cout << "-------------------------------\n\n";
-
-    vector<stUser> vUsers = LoadUserDataFromFileToVector(UsersFileName);
 
     stUser User;
 
@@ -847,13 +840,23 @@ void ShowUsersList(string UsersFileName)
     system("pause>0");
 }
 
-string ConvertUserRecordToLine(stUser User, string Seperator = "#//#")
+string ConvertUserRecordToLine(stUser &User, string Seperator = "#//#")
 {
     string result = "";
     result += User.Username + "#//#";
     result += User.Password + "#//#";
-    result += User.Permissions;
+    result += to_string(User.Permissions);
     return result;
+}
+
+void PrintUserCard(stUser& User)
+{
+    cout << "\nThe followings are the user data\n";
+    cout << "----------------------------------\n";
+    cout << "Username   : " << User.Username << '\n';
+    cout << "Password   : " << User.Password << '\n';
+    cout << "Permissions: " << User.Permissions << '\n';
+    cout << "----------------------------------\n\n";
 }
 
 void AddNewUser(string UsersFileName)
@@ -872,7 +875,7 @@ void AddNewUser(string UsersFileName)
         stUser User;
         cout << "Enter Username: ";
         getline(cin >> ws, User.Username);
-        while (FindUserByUsername(UsersFileName, User.Username))
+        while (FindUserByUsername(UsersFileName, User.Username, User))
         {
             cout << "User with [" << User.Username << "] already exists, enter another username? ";
             getline(cin >> ws, User.Username);
@@ -899,51 +902,174 @@ void AddNewUser(string UsersFileName)
 
 void DeleteUser(string UsersFileName)
 {
+    system("cls");
+    cout << "\n--------------------------------\n";
+    cout << "\tDelete User\n";
+    cout << "--------------------------------\n\n";
 
+    stUser User;
+    cout << "Enter Username: ";
+    getline(cin >> ws, User.Username);
+    if (!FindUserByUsername(UsersFileName, User.Username, User))
+    {
+        cout << "User with [" << User.Username << "] doesn't exists! \n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+        return;
+    }
+    if (User.Username == "Admin")
+    {
+        cout << "You cann't delete this user!\n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+        return;
+    }
+    char confirm = 'n';
+    PrintUserCard(User);
+    cout << "Are you sure you want to delete this user? (y/n) : ";
+    cin >> confirm;
+    if (toupper(confirm) == 'Y')
+    {
+        string Line = ConvertUserRecordToLine(User);
+        DeleteLineFromFile(UsersFileName, Line);
+        cout << "\nUser deleted successfully!\n\n";
+        cout << "Press any key to go back to main Menu....";
+        system("pause>0");
+    }
+    else
+    {
+        cout << "\nDeletion canceled!\n\n";
+        cout << "Press any key to go back to main Menu....";
+        system("pause>0");
+    }
 }
 
-void ManageUsersScreen(string UsersFileName)
+void UpdateUser(string UsersFileName)
 {
-    short choice = 0;
+    system("cls");
+    cout << "\n--------------------------------\n";
+    cout << "\Update User\n";
+    cout << "--------------------------------\n\n";
 
-    do
+    stUser User;
+    cout << "Enter Username: ";
+    getline(cin >> ws, User.Username);
+    if (!FindUserByUsername(UsersFileName, User.Username, User))
     {
-        system("cls");
-        PrintManageUsersScreen();
-        cin >> choice;
+        cout << "User with [" << User.Username << "] doesn't exists! \n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+        return;
+    }
+    if (User.Username == "Admin")
+    {
+        cout << "You cann't update this user!\n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+        return;
+    }
+    char confirm = 'n';
+    PrintUserCard(User);
+    cout << "Are you sure you want to update this user? (y/n) : ";
+    cin >> confirm;
+    if (toupper(confirm) == 'Y')
+    {
+        string OldUserLine = ConvertUserRecordToLine(User);
+        cout << "Enter Password? ";
+        cin >> User.Password;
+        User.Permissions = ReadPermissionsToSet();
 
-        switch (enManageUsersOptions(choice))
+        string NewUserLine = ConvertUserRecordToLine(User);
+
+        UpdateLineFromFile(UsersFileName, OldUserLine, NewUserLine);
+
+        cout << "\nUser updated successfully!\n\n";
+        cout << "Press any key to go back to main Menu....";
+        system("pause>0");
+
+    }
+    else
+    {
+        cout << "\Updating canceled!\n\n";
+        cout << "Press any key to go back to main Menu....";
+        system("pause>0");
+    }
+}
+
+void FindUser(string UsersFileName)
+{
+    system("cls");
+    cout << "\n--------------------------------\n";
+    cout << "\Find User\n";
+    cout << "--------------------------------\n\n";
+
+    stUser User;
+    cout << "Enter Username: ";
+    getline(cin >> ws, User.Username);
+    if (!FindUserByUsername(UsersFileName, User.Username, User))
+    {
+        cout << "User with [" << User.Username << "] doesn't exists! \n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+        return;
+    }
+    else
+    {
+        PrintUserCard(User);
+        cout << "\nPress any key to go back to main menu...";
+        system("pause>0");
+    }
+}
+
+void ManageUsersScreen(string UsersFileName, stUser &User)
+{
+    if (CheckAccessPermission(enPermissions::pManageUsers, User.Permissions))
+    {
+        short choice = 0;
+
+        do
         {
-        case enManageUsersOptions::eShowUsersList:
-            ShowUsersList(UsersFileName);
-            break;
+            system("cls");
+            PrintManageUsersScreen();
+            cin >> choice;
 
-        case enManageUsersOptions::eAddUser:
-            AddNewUser(UsersFileName);
-            break;
+            switch (enManageUsersOptions(choice))
+            {
+            case enManageUsersOptions::eShowUsersList:
+                ShowUsersList(UsersFileName);
+                break;
 
-        case enManageUsersOptions::eDeleteUser:
-            DeleteUser(UsersFileName);
-            break;
+            case enManageUsersOptions::eAddUser:
+                AddNewUser(UsersFileName);
+                break;
 
-        case enManageUsersOptions::eUpdateUserInfo:
-            UpdateUser(UsersFileName);
-            break;
+            case enManageUsersOptions::eDeleteUser:
+                DeleteUser(UsersFileName);
+                break;
 
-        case enManageUsersOptions::eFindUser:
-            FindUser(UsersFileName);
-            break;
+            case enManageUsersOptions::eUpdateUserInfo:
+                UpdateUser(UsersFileName);
+                break;
 
-        case enManageUsersOptions::eMainMenu:
-            break;
+            case enManageUsersOptions::eFindUser:
+                FindUser(UsersFileName);
+                break;
 
-        default:
-            cout << "\nInvalid option! Please choose 1-6.\n";
-            system("pause>0");
-            break;
-        }
+            case enManageUsersOptions::eMainMenu:
+                break;
 
-    } while (enMainMenueOptions(choice) != enMainMenueOptions::eExit);
+            default:
+                cout << "\nInvalid option! Please choose 1-6.\n";
+                system("pause>0");
+                break;
+            }
+
+        } while (enMainMenuOptions(choice) != enMainMenuOptions::eExit);
+    }
+    else
+    {
+        ShowAccessDeniedScreen();
+    }
 }
 
 void BankSys(string ClientsFileName, string UsersFileName)
@@ -953,52 +1079,52 @@ void BankSys(string ClientsFileName, string UsersFileName)
     do
     {
         system("cls");
-        ShowMainMenueScreen();
+        ShowMainMenuScreen();
         cin >> choice;
 
-        switch (enMainMenueOptions(choice))
+        switch (enMainMenuOptions(choice))
         {
-        case enMainMenueOptions::eShowClientsList:
-            ShowClientsScreen(ClientsFileName);
+        case enMainMenuOptions::eShowClientsList:
+            ShowClientsScreen(ClientsFileName, User);
             break;
 
-        case enMainMenueOptions::eAddClients:
+        case enMainMenuOptions::eAddClients:
             AddNewClientsScreen(ClientsFileName, User);
             break;
 
-        case enMainMenueOptions::eDeleteClient:
+        case enMainMenuOptions::eDeleteClient:
             DeleteClientScreen(ClientsFileName, User);
             break;
 
-        case enMainMenueOptions::eUpdateClientInfo:
+        case enMainMenuOptions::eUpdateClientInfo:
             UpdateClientInfoScreen(ClientsFileName, User);
             break;
 
-        case enMainMenueOptions::eFindClient:
+        case enMainMenuOptions::eFindClient:
             FindClientScreen(ClientsFileName, User);
             break;
 
-        case enMainMenueOptions::eTransactions:
+        case enMainMenuOptions::eTransactions:
             TransactionsScreen(ClientsFileName, User);
             break;
 
-        case enMainMenueOptions::eManageUsers:
-            ManageUsersScreen(UsersFileName);
+        case enMainMenuOptions::eManageUsers:
+            ManageUsersScreen(UsersFileName, User);
             break;
-        case enMainMenueOptions::eLoggout:
+        case enMainMenuOptions::eLoggout:
             BankSys(ClientsFileName, UsersFileName);
             break;
-        case enMainMenueOptions::eExit:
+        case enMainMenuOptions::eExit:
             cout << "\nExiting program...\n";
             break;
 
         default:
-            cout << "\nInvalid option! Please choose 1-7.\n";
+            cout << "\nInvalid option! Please choose 1-9.\n";
             system("pause>0");
             break;
         }
 
-    } while (enMainMenueOptions(choice) != enMainMenueOptions::eExit);
+    } while (enMainMenuOptions(choice) != enMainMenuOptions::eExit);
 }
 
 
@@ -1007,7 +1133,7 @@ void BankSys(string ClientsFileName, string UsersFileName)
 
 int main()
 {
-
+    BankSys("Clients.txt", "Users.txt");
 
 
 
