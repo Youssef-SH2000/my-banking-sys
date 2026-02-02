@@ -31,10 +31,11 @@ enum enMainMenuOptions {
     eLoggout = 8,
     eExit = 9
 };
-enum enTransactionsMenuOptions { eDeposit = 1,
+enum enTransactionsMenuOptions {
+    eDeposit = 1,
     eWithdraw = 2,
     eTotalBalances = 3,
-    eExitTranactions = 4
+    eExitTransactions = 4
 };
 enum enPermissions {
     eAll = -1,
@@ -53,6 +54,24 @@ enum enManageUsersOptions {
     eUpdateUserInfo = 4,
     eFindUser = 5,
     eMainMenu = 6
+};
+enum enATMMainMenuOptions {
+    eATMQuickWithdraw = 1,
+    eATMNormalWithdraw = 2,
+    eATMDeposit = 3,
+    eATMCheckBalance = 4,
+    eATMLoggout = 5
+};
+enum enQuickWithdrawOptions {
+    eQW20 = 1,
+    eQW50 = 2,
+    eQW100 = 3,
+    eQW200 = 4,
+    eQW400 = 5,
+    eQW600 = 6,
+    eQW800 = 7,
+    eQW1000 = 8,
+    eQWExit = 9
 };
 
 bool CheckAccessPermission(enPermissions Permission, int UserPermissions)
@@ -592,12 +611,56 @@ void ShowDepositScreen(string ClientsFileName)
     }
 }
 
+void PerformWithdraw(string ClientsFileName, stClient &Client, int Amount)
+{
+    char Confirm = 'N';
+    cout << "Are you sure you want to confirm this transaction (y/n)? ";
+    cin >> Confirm;
+    if (toupper(Confirm) == 'Y')
+    {
+        string OldClient = ConvertClientRecordToLine(Client);
+        Client.AccountBalance -= Amount;
+        string NewClient = ConvertClientRecordToLine(Client);
+        UpdateLineFromFile(ClientsFileName, OldClient, NewClient);
+        cout << "Transaction done successfully!, new balance is: " << Client.AccountBalance << "\n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+    }
+    else
+    {
+        cout << "Transaction canceled!\n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+    }
+}
+
+void PerformDeposit(string ClientsFileName, stClient& Client, int Amount)
+{
+    char Confirm = 'N';
+    cout << "Are you sure you want to confirm this transaction (y/n)? ";
+    cin >> Confirm;
+    if (toupper(Confirm) == 'Y')
+    {
+        string OldClient = ConvertClientRecordToLine(Client);
+        Client.AccountBalance += Amount;
+        string NewClient = ConvertClientRecordToLine(Client);
+        UpdateLineFromFile(ClientsFileName, OldClient, NewClient);
+        cout << "Transaction done successfully!, new balance is: " << Client.AccountBalance << "\n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+    }
+    else
+    {
+        cout << "Transaction canceled!\n\n";
+        cout << "Press any key to go back to main menu...";
+        system("pause>0");
+    }
+}
+
 void ShowWithDrawScreen(string ClientsFileName)
 {
     system("cls");
     stClient Client;
-    char Confirm = 'N';
-    int WithdrawAmount = 0;
     cout << "\n----------------------------------------\n";
     cout << "\tWithdraw Screen\n";
     cout << "----------------------------------------\n";
@@ -611,7 +674,8 @@ void ShowWithDrawScreen(string ClientsFileName)
     }
     else
     {
-        PrintClientCard(Client);
+        int WithdrawAmount = 0;
+        cout << "Your balance is: " << Client.AccountBalance << '\n';
         cout << "Please enter withdraw amount: ";
         cin >> WithdrawAmount;
         while (WithdrawAmount > Client.AccountBalance)
@@ -620,24 +684,7 @@ void ShowWithDrawScreen(string ClientsFileName)
             cout << "\nPlease enter another amount: ";
             cin >> WithdrawAmount;
         }
-        cout << "Are you sure you want to confirm this transaction (y/n)? ";
-        cin >> Confirm;
-        if (toupper(Confirm) == 'Y')
-        {
-            string OldClient = ConvertClientRecordToLine(Client);
-            Client.AccountBalance -= WithdrawAmount;
-            string NewClient = ConvertClientRecordToLine(Client);
-            UpdateLineFromFile(ClientsFileName, OldClient, NewClient);
-            cout << "Transaction done successfully!\n\n";
-            cout << "Press any key to go back to main menu...";
-            system("pause>0");
-        }
-        else
-        {
-            cout << "Transaction canceled!\n\n";
-            cout << "Press any key to go back to main menu...";
-            system("pause>0");
-        }
+        PerformWithdraw(ClientsFileName, Client, WithdrawAmount);
     }
 }
 
@@ -692,7 +739,7 @@ void TransactionsScreen(string ClientsFileName, stUser User)
                 ShowTotalBalancesScreen(ClientsFileName);
                 break;
 
-            case enTransactionsMenuOptions::eExitTranactions:
+                case enTransactionsMenuOptions::eExitTransactions:
                 break;
 
             default:
@@ -701,7 +748,7 @@ void TransactionsScreen(string ClientsFileName, stUser User)
                 break;
             }
 
-        } while (enTransactionsMenuOptions(choice) != enTransactionsMenuOptions::eExitTranactions);
+        } while (enTransactionsMenuOptions(choice) != enTransactionsMenuOptions::eExitTransactions);
     }
     else
     {
@@ -768,7 +815,7 @@ bool FindUserByUsername(string UsersFileName, string Username, stUser &User)
     return false;
 }
 
-stUser LogginScreen(string UsersFileName)
+stUser UserLogginScreen(string UsersFileName)
 {
     system("cls");
     cout << "\n-------------------------------\n";
@@ -1075,7 +1122,7 @@ void ManageUsersScreen(string UsersFileName, stUser &User)
 void BankSys(string ClientsFileName, string UsersFileName)
 {
     short choice = 0;
-    stUser User = LogginScreen(UsersFileName);
+    stUser User = UserLogginScreen(UsersFileName);
     do
     {
         system("cls");
@@ -1127,7 +1174,235 @@ void BankSys(string ClientsFileName, string UsersFileName)
     } while (enMainMenuOptions(choice) != enMainMenuOptions::eExit);
 }
 
+//..................................................................................................................
 
+bool FindClientByAccountNumberAndPIN(string AccountNumber,string PIN, string ClientsFileName, stClient& Client)
+{
+    vector<stClient> vClients = LoadClientDataFromFileToVector(ClientsFileName);
+    for (stClient c : vClients)
+    {
+        if (c.AccountNumber == AccountNumber && c.PIN == PIN)
+        {
+            Client = c;
+            return true;
+        }
+    }
+    return false;
+}
+
+stClient ClientLogginScreen(string ClientsFileName)
+{
+    system("cls");
+    cout << "\n-------------------------------\n";
+    cout << "\tLogin Screen\n";
+    cout << "-------------------------------\n\n";
+
+    stClient Client;
+
+    cout << "Enter account number: ";
+    getline(cin, Client.AccountNumber);
+    cout << "Enter PIN code: ";
+    getline(cin, Client.PIN);
+
+    while (!FindClientByAccountNumberAndPIN(Client.AccountNumber, Client.PIN, ClientsFileName, Client))
+    {
+        cout << "Invalid username/password\n";
+        cout << "Enter account number: ";
+        getline(cin, Client.AccountNumber);
+        cout << "Enter PIN code: ";
+        getline(cin, Client.PIN);
+    }
+    return Client;
+}
+
+void PrintATMMainMenuScreen()
+{
+    cout << "==========================================\n";
+    cout << "          ATM Main Menu Screen            \n";
+    cout << "==========================================\n";
+    cout << "\t[1] Quick Withdraw.\n";
+    cout << "\t[2] Normal Withdraw.\n";
+    cout << "\t[3] Deposit.\n";
+    cout << "\t[4] Check Balance.\n";
+    cout << "\t[5] Log out.\n";
+    cout << "==========================================\n";
+    cout << "Choose what do you want to do (1-5)? ";
+}
+
+void PrintQuickWithdrawScreen(stClient Client)
+{
+    cout << "==========================================\n";
+    cout << "               Quick Withdraw             \n";
+    cout << "==========================================\n";
+    cout << "\t[1] 20          [2] 50\n";
+    cout << "\t[3] 100         [4] 200\n";
+    cout << "\t[5] 400         [6] 600\n";
+    cout << "\t[7] 800         [8] 1000\n";
+    cout << "\t[9] Exit\n";
+    cout << "==========================================\n";
+    cout << "Your balance is: " << Client.AccountBalance << '\n';
+    cout << "Choose what do you want to do (1-9)? ";
+}
+
+void CheckQuickWithdraw(string ClientsFileName, stClient& Client, int amount)
+{
+    if (Client.AccountBalance > amount)
+    {
+        PerformWithdraw(ClientsFileName, Client, amount);
+    }
+    else
+    {
+        cout << "Amount exceeds your balance, make another choice\n\n";
+        cout << "Press any key to continue....";
+        system("pause>0");
+    }
+}
+
+void QuickWithdrawScreen(string ClientsFileName, stClient &Client)
+{
+    short choice = 0;
+
+    do
+    {
+        system("cls");
+        PrintQuickWithdrawScreen(Client);
+        
+        cin >> choice;
+
+        switch (enQuickWithdrawOptions(choice))
+        {
+        case enQuickWithdrawOptions::eQW20:
+            CheckQuickWithdraw(ClientsFileName, Client, 20);
+            return;
+
+        case enQuickWithdrawOptions::eQW50:
+            CheckQuickWithdraw(ClientsFileName, Client, 50);
+            return;
+
+        case enQuickWithdrawOptions::eQW100:
+            CheckQuickWithdraw(ClientsFileName, Client, 100);
+            return;
+
+        case enQuickWithdrawOptions::eQW200:
+            CheckQuickWithdraw(ClientsFileName, Client, 200);
+            return;
+
+        case enQuickWithdrawOptions::eQW400:
+            CheckQuickWithdraw(ClientsFileName, Client, 400);
+            return;
+
+        case enQuickWithdrawOptions::eQW600:
+            CheckQuickWithdraw(ClientsFileName, Client, 600);
+            return;
+
+        case enQuickWithdrawOptions::eQW800:
+            CheckQuickWithdraw(ClientsFileName, Client, 800);
+            return;
+
+        case enQuickWithdrawOptions::eQW1000:
+            CheckQuickWithdraw(ClientsFileName, Client, 1000);
+            return;
+
+            case enQuickWithdrawOptions::eQWExit:
+                return;
+
+        default:
+            cout << "\nInvalid option! Please choose 1-9.\n";
+            system("pause>0");
+            return;
+        }
+    } while (enQuickWithdrawOptions(choice) != enQuickWithdrawOptions::eQWExit);
+}
+
+void NormalWithdrawScreen(string ClientsFileName, stClient& Client)
+{
+    int amount = 1;
+    system("cls");
+    cout << "=====================================\n";
+    cout << "            Normal Withdraw          \n";
+    cout << "=====================================\n\n";
+    do
+    {
+        cout << "Enter an amount multiple of 5's ? ";
+        cin >> amount;
+    } while (amount % 5 != 0);
+    if (amount > Client.AccountBalance)
+    {
+        cout << "Amount exceeds your balance, make another choice\n\n";
+        cout << "Press any key to continue....";
+        system("pause>0");
+        NormalWithdrawScreen(ClientsFileName, Client);
+        return;
+    }
+    PerformWithdraw(ClientsFileName, Client, amount);
+}
+
+void DepositScreen(string ClientsFileName, stClient& Client)
+{
+    system("cls");
+    int amount;
+    cout << "=====================================\n";
+    cout << "            Normal Withdraw          \n";
+    cout << "=====================================\n\n";
+    cout << "Enter a positive amount : ";
+    cin >> amount;
+    PerformDeposit(ClientsFileName, Client, amount);
+}
+
+void ShowBalanceScreen(string ClientsFileName, stClient& Client)
+{
+    system("cls");
+    cout << "=====================================\n";
+    cout << "            Normal Withdraw          \n";
+    cout << "=====================================\n\n";
+    cout << "Your balance is: " << Client.AccountBalance;
+    cout << "\n\nPress any key to go back to main menu....";
+    system("pause>0");
+}
+
+void ATM(string ClientsFileName)
+{
+    stClient Client = ClientLogginScreen(ClientsFileName);
+    
+    short choice = 0;
+
+    do
+    {
+        system("cls");
+        PrintATMMainMenuScreen();
+        cin >> choice;
+        
+        switch (enATMMainMenuOptions(choice))
+        {
+            case enATMMainMenuOptions::eATMQuickWithdraw:
+            QuickWithdrawScreen(ClientsFileName, Client);
+            break;
+
+            case enATMMainMenuOptions::eATMNormalWithdraw:
+            NormalWithdrawScreen(ClientsFileName, Client);
+            break;
+
+            case enATMMainMenuOptions::eATMDeposit:
+            DepositScreen(ClientsFileName, Client);
+            break;
+
+            case enATMMainMenuOptions::eATMCheckBalance:
+            ShowBalanceScreen(ClientsFileName, Client);
+            break;
+
+            case enATMMainMenuOptions::eATMLoggout:
+            ATM(ClientsFileName);
+            break;
+
+        default:
+            cout << "\nInvalid option! Please choose 1-5.\n";
+            system("pause>0");
+            break;
+        }
+    } while (enATMMainMenuOptions(choice) != enATMMainMenuOptions::eATMLoggout);
+
+
+}
 
 
 
